@@ -1,82 +1,91 @@
-class Article:
-    def __init__(self, author, magazine, title):
-        self.author = author
-        self.magazine = magazine
-        self.title = title
-        
 class Author:
     def __init__(self, name):
-         if not isinstance(name, str) or len(name) == 0:
-            raise ValueError("Author name must be a non-empty string")
-         self._name = name
-         self._articles = []
+        self._name = name
+        self._articles = []
 
     @property
     def name(self):
         return self._name
 
-
     def articles(self):
         return self._articles
 
     def magazines(self):
-        return list(set(article.magazine for article in self._articles))
+        return [article.magazine for article in self._articles]
+
+    def topic_areas(self):
+        return [article.magazine.category for article in self._articles]
 
     def add_article(self, magazine, title):
         article = Article(self, magazine, title)
         self._articles.append(article)
         return article
 
-    def topic_areas(self):
-        if not self._articles:
-            return None
-        return list(set(article.magazine.category for article in self._articles))
+    def topic_areas_are_unique(self):
+        return len(set(self.topic_areas())) == len(self.topic_areas())
+
+
 
 class Magazine:
-    magazine_list= []
     def __init__(self, name, category):
-        if not isinstance(name, str) or not (2 <= len(name) <= 16):
-            raise ValueError("Magazine name must be a string between 2 and 16 characters")
-        if not isinstance(category, str) or len(category) == 0:
-            raise ValueError("Magazine category must be a non-empty string")
-        self.name = name
-        self.category = category
+        self._name = name
+        self._category = category
         self._articles = []
-        Magazine.magazines_list.append(self)
 
     @property
+    def name(self):
+        return self._name
+
+    @property
+    def category(self):
+        return self._category
+
+    @name.setter
+    def name(self, value):
+        if isinstance(value, str) and 2 <= len(value) <= 16:
+            self._name = value
+        else:
+            raise ValueError("Name must be a string between 2 and 16 characters long")
+
+    @category.setter
+    def category(self, value):
+        if isinstance(value, str) and len(value) > 0:
+            self._category = value
+        else:
+            raise ValueError("Category must be a non-empty string")
+
     def articles(self):
         return self._articles
 
-
     def contributors(self):
-        return list(set(article.author for article in self._articles))
-
+        return [article.author for article in self._articles]
 
     def article_titles(self):
-                return [article.title for article in self._articles]
-    
+        return [article.title for article in self._articles]
 
     def contributing_authors(self):
-        authors_count = {}
+        authors = {}
         for article in self._articles:
-            author_name = article.author.name
-            authors_count[author_name] = authors_count.get(author_name, 0) + 1
+            author = article.author
+            if author in authors:
+                authors[author] += 1
+            else:
+                authors[author] = 1
+        return [author for author, count in authors.items() if count > 2]
 
-        return [author for author, count in authors_count.items() if count > 2]
-    
-    @classmethod
-    def top_publisher(cls):
-        if not cls.magazines_list:
-            return None
-        return max(cls.magazines_list, key=lambda mag: len(mag.articles()))
-
+    def add_article(self, article):
+        self._articles.append(article)
 
 class Article:
+    all = []
     def __init__(self, author, magazine, title):
-        self._author = author
-        self._magazine = magazine
-        self._title = title
+        self._title =title
+        self._author = None
+        self._magazine = None
+        self.author = author
+        self.magazine = magazine
+        self.all.append(self)
+
 
     @property
     def title(self):
@@ -85,8 +94,29 @@ class Article:
     @property
     def author(self):
         return self._author
+    
+    def __repr__(self):
+        return f"Article(author={self.author.name}, magazine={self.magazine.name}, title={self.title})"
+
+    @author.setter
+    def author(self, new_author):
+        if not isinstance(new_author, Author):
+            raise ValueError("Author must be of type Author")
+        self._author = new_author
 
     @property
     def magazine(self):
         return self._magazine
-        
+
+    @magazine.setter
+    def magazine(self, new_magazine):
+        if not isinstance(new_magazine, Magazine):
+            raise ValueError("Magazine must be of type Magazine")
+        self._magazine = new_magazine
+
+    def validate_title(self, title):
+        if not isinstance(title, str):
+            raise ValueError("Title must be a string")
+        if len(title) < 5 or len(title) > 50:
+            raise ValueError("Title must be between 5 and 50 characters, inclusive")
+        return title
